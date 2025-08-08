@@ -12,31 +12,35 @@ public class User {
         return id;
     }
 
-    public void setId(UUID id) {
+    public User setId(UUID id) {
         this.id = id;
+        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public User setName(String name) {
         this.name = name;
+        return this;
     }
     
     public String getTwitterHandle() {
         return twitterHandle;
     }
 
-    public void setTwitterHandle(String twitterHandle) {
+    public User setTwitterHandle(String twitterHandle) {
         this.twitterHandle = twitterHandle;
+        return this;
     }
 
     public String getImage() {
         return image;
     }
 
-    public void setImage(String image) {
+    public User setImage(String image) {
         this.image = image;
+        return this;
     }
 }

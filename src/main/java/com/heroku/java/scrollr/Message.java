@@ -13,31 +13,35 @@ public class Message {
         return id;
     }
 
-    public void setId(UUID id) {
+    public Message setId(UUID id) {
         this.id = id;
+        return this;
     }
 
     public String getText() {
         return text;
     }
 
-    public void setText(String text) {
+    public Message setText(String text) {
         this.text = text;
+        return this;
     }
 
     public String getTwitterHandle() {
         return twitterHandle;
     }
 
-    public void setTwitterHandle(String twitterHandle) {
+    public Message setTwitterHandle(String twitterHandle) {
         this.twitterHandle = twitterHandle;
+        return this;
     }
 
     public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public Message setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
+        return this;
     }
 }

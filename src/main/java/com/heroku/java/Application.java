@@ -18,7 +18,7 @@ import java.util.UUID;
 import java.sql.SQLException;
 
 import com.heroku.java.kanban.Task;
-
+import com.heroku.java.scrollr.ScrollrService;
 import com.heroku.java.kanban.KanbanUser;
 import com.heroku.java.concerto.Artist;
 import com.heroku.java.concerto.City;
@@ -31,11 +31,13 @@ import com.heroku.java.kanban.KanbanService;
 public class Application {
     private final KanbanService kanbanService;
     private final ConcertoService concertoService;
+    private final ScrollrService scrollrService;
 
     @Autowired
-    public Application(KanbanService kanbanService, ConcertoService concertoService) {
+    public Application(KanbanService kanbanService, ConcertoService concertoService, ScrollrService scrollrService) {
         this.kanbanService = kanbanService;
         this.concertoService = concertoService;
+        this.scrollrService = scrollrService;
     }
 
     @CrossOrigin(origins = {"http://localhost:5173", "https://priyanjoli-mukherjee.github.io"})
@@ -99,6 +101,13 @@ public class Application {
     public ResponseEntity<ArrayList<EventDTO>> getEvents() throws SQLException {
         final ArrayList<EventDTO> output = concertoService.getEvents();
         return ResponseEntity.ok(output);
+    }
+
+    @CrossOrigin(origins = {"http://localhost:5173", "https://priyanjoli-mukherjee.github.io"})
+    @PostMapping(value = "/scrollr-data", produces = "application/json")
+    public ResponseEntity<Void> createScrollrData(@RequestBody String password) throws SQLException {
+        scrollrService.generateData(password);
+        return ResponseEntity.ok().build();
     }
 
     public static void main(String[] args) {

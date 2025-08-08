@@ -11,23 +11,26 @@ public class Conversation {
         return id;
     }
 
-    public void setId(UUID id) {
+    public Conversation setId(UUID id) {
         this.id = id;
+        return this;
     }
 
     public UUID[] getMessageIds() {
         return messageIds;
     }
 
-    public void setMessageIds(UUID[] messageIds) {
+    public Conversation setMessageIds(UUID[] messageIds) {
         this.messageIds = messageIds;
+        return this;
     }
 
     public UUID[] getUserIds() {
         return userIds;
     }
 
-    public void setUserIds(UUID[] userId) {
+    public Conversation setUserIds(UUID[] userId) {
         this.userIds = userId;
+        return this;
     }
 }
