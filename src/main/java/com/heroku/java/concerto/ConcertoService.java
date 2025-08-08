@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.heroku.java.utils.AuthenticationService;
 import com.heroku.java.utils.SQLFormatter;
+import com.heroku.java.utils.RandomUtils;
 
 @Service
 public class ConcertoService {
@@ -141,12 +141,11 @@ public class ConcertoService {
     }
 
     private Ticket[] generateTickets(Connection connection) throws SQLException {
-        final Random random = new Random();
         final String[] letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
         final Ticket[] tickets = new Ticket[letters.length];
 
         for (int i = 0; i < letters.length; i++) {
-            tickets[i] = new Ticket().setId(UUID.randomUUID()).setAmountAvailable(random.nextInt(100)).setPrice((letters.length - i) * 10 + random.nextInt(150)).setSeatGroup("Group " + letters[i]);
+            tickets[i] = new Ticket().setId(UUID.randomUUID()).setAmountAvailable(RandomUtils.randomInteger(100)).setPrice((letters.length - i) * 10 + RandomUtils.randomInteger(150)).setSeatGroup("Group " + letters[i]);
         }
 
         saveTickets(connection, tickets);
@@ -167,21 +166,20 @@ public class ConcertoService {
     }
 
     private Venue[] generateVenues(Connection connection, City[] cities) throws SQLException {
-        final Random random = new Random();
         final int millisInDay = 24 * 60 * 60 * 1000;
-        Arrays.sort(cities, (city1, city2) -> random.nextInt(10) < 5 ? -1 : 1);
+        Arrays.sort(cities, (city1, city2) -> RandomUtils.randomInteger(10) < 5 ? -1 : 1);
         Date date = new Date();
-        date.setTime(date.getTime() + random.nextInt(millisInDay));
+        date.setTime(date.getTime() + RandomUtils.randomInteger(millisInDay));
         final Venue[] venues = new Venue[10 * cities.length];
 
         for (int i = 0; i < cities.length; i++) {
             String[] locations = cities[i].getLocations();
-            String location = locations[random.nextInt(locations.length)];
+            String location = locations[RandomUtils.randomInteger(locations.length)];
             for (int j = 0; j < 10; j++) {
                 date.setTime(date.getTime() + millisInDay);
                 venues[10 * i + j] = new Venue().setId(UUID.randomUUID()).setCityId(cities[i].getId()).setLocation(location).setTimestamp(new Date(date.getTime()));
             }
-            date.setTime(date.getTime() + random.nextInt(millisInDay));
+            date.setTime(date.getTime() + RandomUtils.randomInteger(millisInDay));
         }
 
         saveVenues(connection, venues);
