@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -198,5 +199,201 @@ public class ScrollrService {
             generateConversations(connection, users);
             connection.close();
         }
+    }
+
+    public ArrayList<User> getUsers() throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM scrollr_user");
+        final ArrayList<User> output = new ArrayList<>();
+
+        while (resultSet.next()) {
+            final User user = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitter_handle")).setImage(resultSet.getString("image"));
+            
+            output.add(user);
+        }
+
+        connection.close();
+
+        return output;
+    }
+
+    public User getCurrentUser() throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM scrollr_user WHERE twitter_handle = '@Priya'");
+        User output = null;
+
+        if (resultSet.next()) {
+            output = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitter_handle")).setImage(resultSet.getString("image"));
+        }
+
+        connection.close();
+
+        return output;
+    }
+
+    public ArrayList<TweetDTO> getTweets() throws SQLException {
+        final ArrayList<User> users = getUsers();
+        final HashMap<UUID, User> userById = new HashMap<>();
+        for (int i = 0; i < users.size(); i++) {
+            userById.put(users.get(i).getId(), users.get(i));
+        }
+
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM tweet ORDER BY timestamp DESC");
+        final ArrayList<TweetDTO> output = new ArrayList<>();
+
+        while (resultSet.next()) {
+            UUID userId = resultSet.getObject("user_id", UUID.class);
+            User user = userById.get(userId);
+
+            final TweetDTO tweet = new TweetDTO().setId(resultSet.getObject("id", UUID.class)).setName(user.getName()).setTwitterHandle(user.getTwitterHandle()).setImage(user.getImage()).setMessage(resultSet.getString("message")).setReplyingTo(resultSet.getObject("replying_to", UUID.class)).setTimestamp(resultSet.getTimestamp("timestamp")).setUserId(userId);
+
+            output.add(tweet);
+        }
+
+        connection.close();
+
+        return output;
+    }
+
+    private ArrayList<Message> getMessages() throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM message");
+        final ArrayList<Message> output = new ArrayList<>();
+
+        while (resultSet.next()) {
+            final Message message = new Message().setId(resultSet.getObject("id", UUID.class)).setText(resultSet.getString("text")).setTwitterHandle(resultSet.getString("twitter_handle")).setTimestamp(resultSet.getTimestamp("timestamp"));
+            
+            output.add(message);
+        }
+
+        connection.close();
+
+        return output;
+    }
+
+    public ArrayList<ConversationDTO> getConversations() throws SQLException {
+        final ArrayList<User> users = getUsers();
+        final HashMap<UUID, User> userById = new HashMap<>();
+        for (int i = 0; i < users.size(); i++) {
+            userById.put(users.get(i).getId(), users.get(i));
+        }
+
+        final ArrayList<Message> messages = getMessages();
+        final HashMap<UUID, Message> messageById = new HashMap<>();
+        for (int i = 0; i < messages.size(); i++) {
+            messageById.put(messages.get(i).getId(), messages.get(i));
+        }
+
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM conversation");
+        final ArrayList<ConversationDTO> output = new ArrayList<>();
+
+        while (resultSet.next()) {
+            UUID[] messageIds = (UUID[]) resultSet.getArray("message_ids").getArray();
+            
+            Message[] conversationMessages = new Message[messageIds.length];
+            for (int i = 0; i < messageIds.length; i++) {
+                conversationMessages[i] = messageById.get(messageIds[i]);
+            }
+            
+            UUID[] userIds = (UUID[]) resultSet.getArray("user_ids").getArray();
+            
+            User[] conversationUsers = new User[userIds.length];
+            for (int i = 0; i < userIds.length; i++) {
+                conversationUsers[i] = userById.get(userIds[i]);
+            }
+            
+            final ConversationDTO conversation = new ConversationDTO().setId(resultSet.getObject("id", UUID.class)).setMessages(conversationMessages).setUsers(conversationUsers);
+
+            output.add(conversation);
+        }
+
+        connection.close();
+
+        return output;
+    }
+
+    public TweetDTO createTweet(TweetDTO tweet) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        UUID id = UUID.randomUUID();
+        tweet.setId(id);
+        String sql = "INSERT INTO tweet (id, message, replying_to, timestamp, user_id) VALUES (" + SQLFormatter.formatUUID(id) + ", " + SQLFormatter.formatString(tweet.getMessage()) + ", " + SQLFormatter.formatUUID(tweet.getReplyingTo()) + ", " + SQLFormatter.formatTimestamp(tweet.getTimestamp()) + ", " + SQLFormatter.formatUUID(tweet.getUserId()) + ")";
+        statement.executeUpdate(sql);
+        connection.close();
+        return tweet;
+    }
+
+    private void appendMessageToConversation(UUID messageId, UUID conversationId) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        final var resultSet = statement.executeQuery("SELECT * FROM conversation WHERE id = " + SQLFormatter.formatUUID(conversationId));
+        if (resultSet.next()) {
+            UUID[] messageIds = (UUID[]) resultSet.getArray("message_ids").getArray();
+            UUID[] updatedMessageIds = new UUID[messageIds.length + 1];
+            for (int i = 0; i < messageIds.length; i++) {
+                updatedMessageIds[i] = messageIds[i];
+            }
+            updatedMessageIds[updatedMessageIds.length - 1] = messageId;
+            String sql = "UPDATE conversation SET message_ids = " + SQLFormatter.formatUUIDArray(updatedMessageIds) + " WHERE id = " + SQLFormatter.formatUUID(conversationId);
+            statement.executeUpdate(sql);
+        }
+        connection.close();
+    }
+
+    public Message createMessage(Message message, UUID conversationId) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        UUID id = UUID.randomUUID();
+        message.setId(id);
+        String sql = "INSERT INTO message (id, text, twitter_handle, timestamp) VALUES (" + SQLFormatter.formatUUID(id) + ", " + SQLFormatter.formatString(message.getText()) + ", " + SQLFormatter.formatString(message.getTwitterHandle()) + ", " + SQLFormatter.formatTimestamp(message.getTimestamp()) + ")";
+        statement.executeUpdate(sql);
+        connection.close();
+        appendMessageToConversation(message.getId(), conversationId);
+        return message;
+    }
+
+    public ConversationDTO createConversation(ConversationDTO conversation) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        UUID id = UUID.randomUUID();
+        conversation.setId(id);
+        Message[] messages = conversation.getMessages();
+        UUID[] messageIds = new UUID[messages.length];
+        for (int i = 0; i < messageIds.length; i++) {
+            messageIds[i] = messages[i].getId();
+        }
+        User[] users = conversation.getUsers();
+        UUID[] userIds = new UUID[users.length];
+        for (int i = 0; i < userIds.length; i++) {
+            userIds[i] = users[i].getId();
+        }
+        String sql = "INSERT INTO conversation (id, message_ids, user_ids) VALUES (" + SQLFormatter.formatUUID(id) + ", " + SQLFormatter.formatUUIDArray(messageIds) + ", " + SQLFormatter.formatUUIDArray(userIds) + ")";
+        statement.executeUpdate(sql);
+        connection.close();
+        return conversation;
+    }
+
+    public TweetDTO updateTweet(UUID id, TweetDTO tweet) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        String sql = "UPDATE tweet SET message = " + SQLFormatter.formatString(tweet.getMessage()) + ", replying_to = " + SQLFormatter.formatUUID(tweet.getReplyingTo()) + ", timestamp = " + SQLFormatter.formatTimestamp(tweet.getTimestamp()) + ", user_id = " + SQLFormatter.formatUUID(tweet.getUserId()) + " WHERE id = " + SQLFormatter.formatUUID(id);
+        statement.executeUpdate(sql);
+        connection.close();
+        return tweet;
+    }
+
+    public void deleteTweet(UUID id) throws SQLException {
+        Connection connection = dataSource.getConnection();
+        final var statement = connection.createStatement();
+        String sql = "DELETE FROM tweet WHERE id = " + SQLFormatter.formatUUID(id);
+        statement.executeUpdate(sql);
+        connection.close();
     }
 }

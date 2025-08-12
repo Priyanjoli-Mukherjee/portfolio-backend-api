@@ -6,11 +6,23 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class SQLFormatter {
+    public static String replaceQuotes(String str) {
+        String result = "";
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == '\'') {
+                result += "''";
+            } else {
+                result += str.charAt(i);
+            }
+        }
+        return result;
+    }
+
     public static String formatString(String str) {
         if (str == null) {
             return "NULL";
         }
-        return "'" + str + "'";
+        return "'" + replaceQuotes(str) + "'";
     }
 
     public static String formatDate(Date date) {
