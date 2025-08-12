@@ -208,7 +208,7 @@ public class ScrollrService {
         final ArrayList<User> output = new ArrayList<>();
 
         while (resultSet.next()) {
-            final User user = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitterHandle")).setImage(resultSet.getString("image"));
+            final User user = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitter_handle")).setImage(resultSet.getString("image"));
             
             output.add(user);
         }
@@ -225,7 +225,7 @@ public class ScrollrService {
         User output = null;
 
         if (resultSet.next()) {
-            output = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitterHandle")).setImage(resultSet.getString("image"));
+            output = new User().setId(resultSet.getObject("id", UUID.class)).setName(resultSet.getString("name")).setTwitterHandle(resultSet.getString("twitter_handle")).setImage(resultSet.getString("image"));
         }
 
         connection.close();
@@ -266,7 +266,7 @@ public class ScrollrService {
         final ArrayList<Message> output = new ArrayList<>();
 
         while (resultSet.next()) {
-            final Message message = new Message().setId(resultSet.getObject("id", UUID.class)).setText(resultSet.getString("text")).setTwitterHandle(resultSet.getString("twitterHandle")).setTimestamp(resultSet.getTimestamp("timestamp"));
+            final Message message = new Message().setId(resultSet.getObject("id", UUID.class)).setText(resultSet.getString("text")).setTwitterHandle(resultSet.getString("twitter_handle")).setTimestamp(resultSet.getTimestamp("timestamp"));
             
             output.add(message);
         }
