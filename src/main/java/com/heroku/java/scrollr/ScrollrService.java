@@ -242,7 +242,7 @@ public class ScrollrService {
 
         Connection connection = dataSource.getConnection();
         final var statement = connection.createStatement();
-        final var resultSet = statement.executeQuery("SELECT * FROM tweet");
+        final var resultSet = statement.executeQuery("SELECT * FROM tweet ORDER BY timestamp DESC");
         final ArrayList<TweetDTO> output = new ArrayList<>();
 
         while (resultSet.next()) {
